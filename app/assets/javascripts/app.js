@@ -1,4 +1,4 @@
-var nfAPP = angular.module('flapperNews', ['ui.router']);
+var nfAPP = angular.module('flapperNews', ['ui.router', 'templates']);
 
 nfAPP.config([
 	'$stateProvider',
@@ -6,82 +6,26 @@ nfAPP.config([
 	function($stateProvider, $urlRouterProvider) {
 		$stateProvider.state('home', {
 			url: '/home',
-			templateUrl: '/home.html',
-			controller: 'MainCtrl'
+			templateUrl: 'home/_home.html',
+			controller: 'MainCtrl',
+			resolve: {
+				postPromise: ['posts', function(posts){
+					return posts.getAll();
+				}]
+			}
 		});
 
 		$stateProvider.state('posts', {
 			url: '/posts/{id}',
-			templateUrl: '/posts.html',
-			controller: 'postsCtrl'
+			templateUrl: 'posts/_posts.html',
+			controller: 'postsCtrl',
+			resolve: {
+				post: ['$stateParams', 'posts', function($stateParams, posts) {
+					return posts.get($stateParams.id)
+				}]
+			}
 		});
 
 		$urlRouterProvider.otherwise('home');
 	}
 ]);
-
-nfAPP.factory('posts', [function(){
-	var o = {
-		posts: [
-			{title: 'post 1', upvotes: 5},
-			{title: 'post 2', upvotes: 2},
-			{title: 'post 3', upvotes: 15},
-			{title: 'post 4', upvotes: 9},
-			{title: 'post 5', upvotes: 4}
-		]
-	};
-	return o;
-}])
-
-nfAPP.controller('MainCtrl', ['$scope', 'posts', function($scope, posts) {
-	$scope.posts = posts.posts;
-
-	$scope.addPost = function() {
-		if (!$scope.title || $scope.title == '') {
-			return;
-		}
-		$scope.posts.push({
-			title: $scope.title,
-			link: $scope.link,
-			upvotes: 0,
-			comments: [
-				{author: 'Manoj', body: 'Nice post', upvotes: 0},
-				{author: 'Dan', body: 'Not nice', upvotes: 0},
-			]
-		});
-
-		$scope.title = '';
-		$scope.link = '';
-	};
-
-	$scope.incrementUpvotes = function(post) {
-		post.upvotes += 1;
-	};
-}]);
-
-nfAPP.controller('postsCtrl', [
-'$scope',
-'$stateParams',
-'posts',
-function($scope, $stateParams, posts) {
-	$scope.post = posts.posts[$stateParams.id];
-
-	$scope.addComment = function() {
-		if ($scope.body === '') {
-			return;
-		}
-
-		$scope.post.comments.push({
-			body: $scope.body,
-			author: 'user',
-			upvotes: 0
-		});
-
-		$scope.body = '';
-	}
-
-	$scope.incrementUpvotes = function(comment) {
-		comment.upvotes += 1;
-	};
-
-}]);
